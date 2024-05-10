@@ -879,16 +879,6 @@ class TriangleSAHPred {
         faces_(rhs.faces_),
         vertex_stride_bytes_(rhs.vertex_stride_bytes_) {}
 
-  TriangleSAHPred<T> &operator=(const TriangleSAHPred<T> &rhs) {
-    axis_ = rhs.axis_;
-    pos_ = rhs.pos_;
-    vertices_ = rhs.vertices_;
-    faces_ = rhs.faces_;
-    vertex_stride_bytes_ = rhs.vertex_stride_bytes_;
-
-    return (*this);
-  }
-
   void Set(int axis, T pos) const {
     axis_ = axis;
     pos_ = pos;
