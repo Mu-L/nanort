@@ -37,7 +37,15 @@ THE SOFTWARE.
 
 #include "trackball.h"
 
+#if defined(LASRENDER_USE_PDAL)
+#include <pdal/PointTable.hpp>
+#include <pdal/PointView.hpp>
+#include <pdal/io/LasReader.hpp>
+#include <pdal/io/LasHeader.hpp>
+#include <pdal/Options.hpp>
+#else
 #include <liblas/liblas.hpp>
+#endif
 
 namespace example {
 
@@ -434,6 +442,10 @@ static std::string GetFilePathExtension(const std::string& FileName) {
 }
 
 bool LoadLASData(Particles* particles, const char* filename, float scale) {
+
+#if defined(LASRENDER_USE_PDAL)
+
+#else
   std::ifstream ifs;
   //ifs.open(std::string(filename), std::ios::in | std::ios::binary);
   if (!liblas::Open(ifs, filename)) {
@@ -449,7 +461,7 @@ bool LoadLASData(Particles* particles, const char* filename, float scale) {
 
   liblas::Header const& header = reader.GetHeader();
 
-  std::cout << "Compressed: " << ((header.Compressed() == true) ? "true":"false");
+  std::cout << "Compressed: " << ((header.Compressed() == true) ? "true":"false") << "\n";
   std::cout << "Signature: " << header.GetFileSignature() << '\n';
   std::cout << "Points count: " << header.GetPointRecordsCount() << '\n';
 
@@ -520,6 +532,7 @@ bool LoadLASData(Particles* particles, const char* filename, float scale) {
   }
 
   return true;
+#endif
 }
 
 bool Renderer::LoadLAS(const char* las_filename, float scene_scale) {

@@ -55,7 +55,7 @@ solution "LASRenderSolution"
       if os.is("Linux") then
          files {
             "../common/OpenGLWindow/X11OpenGLWindow.cpp",
-            "../common/OpenGLWindow/X11OpenGLWindows.h"
+            "../common/OpenGLWindow/X11OpenGLWindow.h"
             }
          links {"X11", "pthread", "dl"}
       end
