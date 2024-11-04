@@ -19,7 +19,7 @@ Right-handed coorinate, Y up, counter clock-wise normal definition.
 
 ## Build on Linux
 
-Install liblas http://www.liblas.org/
+Install liblas https://www.liblas.org/
 
 Then,
 

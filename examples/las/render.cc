@@ -74,7 +74,7 @@ const float kPI = 3.141592f;
 
 typedef struct {
   std::vector<float> vertices;
-  std::vector<float> colors;
+  std::vector<float> colors; // rgb
   std::vector<float> radiuss;
 } Particles;
 
@@ -122,6 +122,18 @@ class SphereGeometry {
     (*bmax)[0] = vertices_[3 * prim_index + 0] + radiuss_[prim_index];
     (*bmax)[1] = vertices_[3 * prim_index + 1] + radiuss_[prim_index];
     (*bmax)[2] = vertices_[3 * prim_index + 2] + radiuss_[prim_index];
+  }
+
+  void BoundingBoxAndCenter(float3 *bmin, float3 *bmax, float3 *center, unsigned int prim_index) const {
+    (*bmin)[0] = vertices_[3 * prim_index + 0] - radiuss_[prim_index];
+    (*bmin)[1] = vertices_[3 * prim_index + 1] - radiuss_[prim_index];
+    (*bmin)[2] = vertices_[3 * prim_index + 2] - radiuss_[prim_index];
+    (*bmax)[0] = vertices_[3 * prim_index + 0] + radiuss_[prim_index];
+    (*bmax)[1] = vertices_[3 * prim_index + 1] + radiuss_[prim_index];
+    (*bmax)[2] = vertices_[3 * prim_index + 2] + radiuss_[prim_index];
+    (*center)[0] = vertices_[3 * prim_index + 0];
+    (*center)[1] = vertices_[3 * prim_index + 1];
+    (*center)[2] = vertices_[3 * prim_index + 2];
   }
 
   const float *vertices_;
@@ -423,9 +435,9 @@ static std::string GetFilePathExtension(const std::string& FileName) {
 
 bool LoadLASData(Particles* particles, const char* filename, float scale) {
   std::ifstream ifs;
-  ifs.open(std::string(filename), std::ios::in | std::ios::binary);
-
-  if (!ifs) {
+  //ifs.open(std::string(filename), std::ios::in | std::ios::binary);
+  if (!liblas::Open(ifs, filename)) {
+    std::cerr << "Failed to open las file(file does not exist?): " << filename << "\n";
     return false;
   }
 
@@ -433,6 +445,7 @@ bool LoadLASData(Particles* particles, const char* filename, float scale) {
 
   liblas::ReaderFactory f;
   liblas::Reader reader = f.CreateWithStream(ifs);
+
 
   liblas::Header const& header = reader.GetHeader();
 
@@ -452,7 +465,7 @@ bool LoadLASData(Particles* particles, const char* filename, float scale) {
   while (reader.ReadNextPoint())
   {
         liblas::Point const& p = reader.GetPoint();
-        liblas::Color const& c = p.GetColor();
+        liblas::Color const& c = p.GetColor(); // 16bit uint
 
         // Zup -> Y up.
         particles->vertices.push_back(p.GetX());
@@ -466,7 +479,10 @@ bool LoadLASData(Particles* particles, const char* filename, float scale) {
         bmax[1] = std::max(bmax[1], static_cast<float>(-p.GetZ()));
         bmax[2] = std::max(bmax[2], static_cast<float>(p.GetY()));
 
-        // @todo { colors }
+        // [0, 65535] -> [0, 1.0]
+        particles->colors.push_back(float(c.GetRed() / 65535.0f));
+        particles->colors.push_back(float(c.GetGreen() / 65535.0f));
+        particles->colors.push_back(float(c.GetBlue() / 65535.0f));
   }
 
   printf("bmin = %f, %f, %f\n", bmin[0], bmin[1], bmin[2]);
@@ -670,6 +686,14 @@ bool Renderer::Render(RenderLayer* layer, float quat[4],
 
             // Simple shading
             float NdotV = fabsf(vdot(N, dir));
+
+            if (gParticles.colors.size() == gParticles.vertices.size()) {
+              // has color
+              diffuse_col[0] = gParticles.colors[3*prim_id+0];
+              diffuse_col[1] = gParticles.colors[3*prim_id+1];
+              diffuse_col[2] = gParticles.colors[3*prim_id+2];
+              NdotV = 1.0f;
+            }
 
             if (config.pass == 0) {
               layer->rgba[4 * (y * config.width + x) + 0] =
