@@ -441,9 +441,109 @@ static std::string GetFilePathExtension(const std::string& FileName) {
   return "";
 }
 
-bool LoadLASData(Particles* particles, const char* filename, float scale) {
+bool LoadLASData(Particles* particles, const char* filename, float scale, uint32_t max_points) {
 
 #if defined(LASRENDER_USE_PDAL)
+  //std::ifstream ifs;
+  //if (!liblas::Open(ifs, filename)) {
+  //  std::cerr << "Failed to open las file(file does not exist?): " << filename << "\n";
+  //  return false;
+  //}
+
+  pdal::Option f_opt("filename", filename);
+  pdal::Options opts;
+  opts.add(f_opt);
+  pdal::LasReader reader;
+  reader.setOptions(opts);
+
+  pdal::PointTable table;
+  reader.prepare(table);
+
+  pdal::PointViewSet pvset = reader.execute(table);
+  pdal::PointViewPtr pointView = *pvset.begin();
+
+  pdal::LasHeader header = reader.header();
+
+  //std::cout << "Compressed: " << ((header.Compressed() == true) ? "true":"false") << "\n";
+  std::cout << "Signature: " << header.fileSignature() << '\n';
+  std::cout << "Points count: " << header.pointCount() << '\n';
+  std::cout << "Points to read: " << (std::min)(header.pointCount(), size_t(max_points)) << '\n';
+
+  particles->vertices.clear();
+  particles->colors.clear();
+  particles->radiuss.clear();
+
+  float bmin[3], bmax[3];
+  bmin[0] = bmin[1] = bmin[2] = std::numeric_limits<float>::max();
+  bmax[0] = bmax[1] = bmax[2] = -std::numeric_limits<float>::max();
+
+  bool hasColor = header.hasColor();
+
+  size_t numPointsToRead = (std::min)(header.pointCount(), size_t(max_points));
+
+  for (size_t i = 0; i < numPointsToRead; i++) {
+    double x = pointView->getFieldAs<double>(pdal::Dimension::Id::X, i);
+    double y = pointView->getFieldAs<double>(pdal::Dimension::Id::Y, i);
+    double z = pointView->getFieldAs<double>(pdal::Dimension::Id::Z, i);
+
+        particles->vertices.push_back(x);
+        particles->vertices.push_back(y);
+        particles->vertices.push_back(z);
+
+        bmin[0] = std::min(bmin[0], static_cast<float>(x));
+        bmin[1] = std::min(bmin[1], static_cast<float>(y));
+        bmin[2] = std::min(bmin[2], static_cast<float>(z));
+        bmax[0] = std::max(bmax[0], static_cast<float>(x));
+        bmax[1] = std::max(bmax[1], static_cast<float>(y));
+        bmax[2] = std::max(bmax[2], static_cast<float>(z));
+
+        // TODO: Use hasDim(Id::Red)
+        if (hasColor) {
+          // [0, 65535] -> [0, 1.0]
+          int red = pointView->getFieldAs<int>(pdal::Dimension::Id::Red, i);
+          int green = pointView->getFieldAs<int>(pdal::Dimension::Id::Green, i);
+          int blue = pointView->getFieldAs<int>(pdal::Dimension::Id::Blue, i);
+          particles->colors.push_back(float(red) / 65535.0f);
+          particles->colors.push_back(float(green) / 65535.0f);
+          particles->colors.push_back(float(blue) / 65535.0f);
+        }
+  }
+
+  printf("bmin = %f, %f, %f\n", bmin[0], bmin[1], bmin[2]);
+  printf("bmax = %f, %f, %f\n", bmax[0], bmax[1], bmax[2]);
+
+  float bsize[3];
+  bsize[0] = bmax[0] - bmin[0];
+  bsize[1] = bmax[1] - bmin[1];
+  bsize[2] = bmax[2] - bmin[2];
+
+  float bcenter[3];
+  bcenter[0] = bmin[0] + bsize[0] * 0.5f;
+  bcenter[1] = bmin[1] + bsize[1] * 0.5f;
+  bcenter[2] = bmin[2] + bsize[2] * 0.5f;
+
+  float invsize = bsize[0];
+  if (bsize[1] > invsize) {
+    invsize = bsize[1];
+  }
+  if (bsize[2] > invsize) {
+    invsize = bsize[2];
+  }
+
+  invsize = 1.0f / invsize;
+  printf("invsize = %f\n", invsize);
+
+  // Centerize & scaling 
+  for (size_t i = 0; i < particles->vertices.size() / 3; i++) {
+    particles->vertices[3 * i + 0] = (particles->vertices[3 * i + 0] - bcenter[0]) * invsize;
+    particles->vertices[3 * i + 1] = (particles->vertices[3 * i + 1] - bcenter[1]) * invsize;
+    particles->vertices[3 * i + 2] = (particles->vertices[3 * i + 2] - bcenter[2]) * invsize;
+
+    // Set approximate particle radius.
+    particles->radiuss.push_back(0.5f * invsize);
+  }
+
+  return true;
 
 #else
   std::ifstream ifs;
@@ -535,8 +635,8 @@ bool LoadLASData(Particles* particles, const char* filename, float scale) {
 #endif
 }
 
-bool Renderer::LoadLAS(const char* las_filename, float scene_scale) {
-  return LoadLASData(&gParticles, las_filename, scene_scale);
+bool Renderer::LoadLAS(const char* las_filename, float scene_scale, uint32_t max_points) {
+  return LoadLASData(&gParticles, las_filename, scene_scale, max_points);
 }
 
 bool Renderer::BuildBVH() {

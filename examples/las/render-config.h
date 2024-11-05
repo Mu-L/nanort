@@ -43,6 +43,7 @@ typedef struct {
   // Scene input info
   std::string las_filename;
   float scene_scale;
+  uint32_t max_points{~0u};
 
 } RenderConfig;
 

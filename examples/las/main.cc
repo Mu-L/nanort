@@ -233,8 +233,9 @@ void checkErrors(std::string desc) {
 }
 
 void keyboardCallback(int keycode, int state) {
-  printf("hello key %d, state %d(ctrl %d)\n", keycode, state,
-         window->isModifierKeyPressed(B3G_CONTROL));
+  //printf("hello key %d, state %d(ctrl %d)\n", keycode, state,
+  //       window->isModifierKeyPressed(B3G_CONTROL));
+  
   // if (keycode == 'q' && window && window->isModifierKeyPressed(B3G_SHIFT)) {
   if (keycode == 27) {
     if (window) window->setRequestExit();
@@ -419,7 +420,7 @@ int main(int argc, char** argv) {
 
     // Load .las model
     bool las_ret = gRenderer.LoadLAS(gRenderConfig.las_filename.c_str(),
-                                         gRenderConfig.scene_scale);
+                                         gRenderConfig.scene_scale, gRenderConfig.max_points);
     if (!las_ret) {
       fprintf(stderr, "Failed to load [ %s ]\n",
               gRenderConfig.las_filename.c_str());
@@ -473,7 +474,7 @@ int main(int argc, char** argv) {
 
   ImGuiIO& io = ImGui::GetIO();
   // io.Fonts->AddFontDefault();
-  io.Fonts->AddFontFromFileTTF("./Inconsolata-Regular.ttf", 15.0f);
+  io.Fonts->AddFontFromFileTTF("./Inconsolata-Regular.ttf", 22.0f);
 
   std::thread renderThread(RenderThread);
 

@@ -42,6 +42,12 @@ bool LoadRenderConfig(example::RenderConfig* config, const char* filename) {
     }
   }
 
+  if (o.find("max_points") != o.end()) {
+    if (o["max_points"].is<double>()) {
+      config->max_points = static_cast<uint32_t>(o["max_points"].get<double>());
+    }
+  }
+
   config->eye[0] = 0.0f;
   config->eye[1] = 0.0f;
   config->eye[2] = 5.0f;

@@ -8,16 +8,34 @@ Right-handed coorinate, Y up, counter clock-wise normal definition.
 
 ## Requirements
 
-* premake5
+* cmake(PDAL) or premake5(liblas)
 * OpenGL 2.x
-* liblas
+* pdal(Point Data Abstraction layer. recommended) or liblas
 * lastools(laszip) (optional)
 
 ## TODO
 
-* [ ] Color
+* [x] Color
 
 ## Build on Linux
+
+### PDAL
+
+Install pdal(you can use apt for Ubuntu).
+
+Then,
+
+```
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make
+```
+
+### liblas
+
+liblas support is deprecated, since PDAL is now recommended library to load las.
+(And you'll face some Boost problem if you build liblas from source)
 
 Install liblas https://www.liblas.org/
 
@@ -40,9 +58,7 @@ Please note that `libas` installed with brew does not support compreession(LAZ),
 
 ## Usage
 
-Edit `config.json`, then
-
-    $ ./bin/native/Release/lasrender
+Edit `config.json`, then run `lasrender`
 
 ### Mouse operation
 
