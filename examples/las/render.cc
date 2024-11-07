@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include <thread>  // C++11
 #include <vector>
 #include <algorithm>
+#include <functional>
 
 #include <iostream>
 
