@@ -6,7 +6,7 @@
 
 namespace example {
 
-typedef struct {
+struct RenderLayer {
   // color
   std::vector<float> rgba;
 
@@ -23,9 +23,9 @@ typedef struct {
   int width;
   int height;
 
-} RenderLayer;
+};
 
-typedef struct {
+struct RenderConfig {
   // framebuffer
   int width;
   int height;
@@ -45,7 +45,7 @@ typedef struct {
   float scene_scale;
   uint32_t max_points{~0u};
 
-} RenderConfig;
+};
 
 /// Loads config from JSON file.
 bool LoadRenderConfig(example::RenderConfig *config, const char *filename);

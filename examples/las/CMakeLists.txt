@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(${TARGET} CXX)
+if (APPLE)
+  project(${TARGET} CXX OBJCXX)
+else()
+  project(${TARGET} CXX)
+endif()
 
 set(TARGET lasrender)
 
@@ -21,7 +25,14 @@ set(SOURCES
    ${PROJECT_SOURCE_DIR}/../common/imgui/imgui_impl_btgui.cpp
   )
 
-if (UNIX)
+if (MSVC)
+  message(FATAIL TODO)
+elseif (APPLE)
+  set(UI_SOURCES
+      ${PROJECT_SOURCE_DIR}/../common/OpenGLWindow/MacOpenGLWindow.mm
+      ${PROJECT_SOURCE_DIR}/../common/OpenGLWindow/MacOpenGLWindow.h
+      )
+elseif (UNIX)
   set(UI_SOURCES
       ${PROJECT_SOURCE_DIR}/../common/OpenGLWindow/X11OpenGLWindow.cpp
       ${PROJECT_SOURCE_DIR}/../common/OpenGLWindow/X11OpenGLWindow.h
@@ -37,10 +48,12 @@ else()
 endif()
 
 add_executable(${TARGET} ${SOURCES} ${UI_SOURCES})
-if (UNIX)
+if (APPLE)
+  target_link_libraries(${TARGET} "-framework Foundation -framework Cocoa")
+elseif(UNIX)
   target_link_libraries(${TARGET} X11)
 endif()
-target_link_libraries(${TARGET} ${DEP_LIBS} GL GLEW::glew ${CMAKE_DL_LIBS})
+target_link_libraries(${TARGET} ${DEP_LIBS} OpenGL::GL GLEW::glew ${CMAKE_DL_LIBS})
 target_include_directories(${TARGET} PRIVATE ${PROJECT_SOURCE_DIR}/../common/)
 target_include_directories(${TARGET} PRIVATE ${PROJECT_SOURCE_DIR}/../common/imgui)
 target_include_directories(${TARGET} PRIVATE ${GLEW_INCLUDE_DIRS})
