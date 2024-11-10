@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include <thread>  // C++11
 #include <vector>
 #include <algorithm>
+#include <functional>
 
 #include <iostream>
 
@@ -467,7 +468,7 @@ bool LoadLASData(Particles* particles, const char* filename, float scale, uint32
   //std::cout << "Compressed: " << ((header.Compressed() == true) ? "true":"false") << "\n";
   std::cout << "Signature: " << header.fileSignature() << '\n';
   std::cout << "Points count: " << header.pointCount() << '\n';
-  std::cout << "Points to read: " << (std::min)(header.pointCount(), size_t(max_points)) << '\n';
+  std::cout << "Points to read: " << (std::min)(size_t(header.pointCount()), size_t(max_points)) << '\n';
 
   particles->vertices.clear();
   particles->colors.clear();
@@ -479,7 +480,7 @@ bool LoadLASData(Particles* particles, const char* filename, float scale, uint32
 
   bool hasColor = header.hasColor();
 
-  size_t numPointsToRead = (std::min)(header.pointCount(), size_t(max_points));
+  size_t numPointsToRead = (std::min)(size_t(header.pointCount()), size_t(max_points));
 
   for (size_t i = 0; i < numPointsToRead; i++) {
     double x = pointView->getFieldAs<double>(pdal::Dimension::Id::X, i);
